@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis AI Mobile</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { background-color: #050505; color: #00d4ff; text-align: center; font-family: 'Courier New', monospace; overflow: hidden; margin: 0; padding: 0; }
+        
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+
+        /* Animation Design */
+        .jarvis-ui { position: relative; width: 220px; height: 220px; margin-bottom: 20px; }
+        .outer-ring { position: absolute; width: 100%; height: 100%; border: 2px dashed #00d4ff; border-radius: 50%; animation: rotate 8s linear infinite; opacity: 0.4; }
+        .inner-core { position: absolute; top: 25%; left: 25%; width: 50%; height: 50%; background: radial-gradient(circle, #00d4ff 10%, #005f73 80%); border-radius: 50%; box-shadow: 0 0 40px #00d4ff; transition: 0.5s; }
+
+        /* Active State Animation */
+        .active-mode .inner-core { background: radial-gradient(circle, #ff00ea 10%, #7b00ff 80%); box-shadow: 0 0 60px #ff00ea; animation: pulse 1s infinite alternate; }
+        
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse { from { transform: scale(0.9); } to { transform: scale(1.1); } }
+
+        #status { font-size: 1.2rem; letter-spacing: 3px; margin-top: 20px; color: #00d4ff; }
+        #sub-text { font-size: 0.8rem; opacity: 0.6; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-ui">
+    <div class="jarvis-ui">
+        <div class="outer-ring"></div>
+        <div class="inner-core"></div>
+    </div>
+    <h2 id="status">TAP TO START</h2>
+    <p id="sub-text">Jarvis is Sleeping</p>
+</div>
+
+<script>
+    const ui = document.getElementById('main-ui');
+    const statusText = document.getElementById('status');
+    const subText = document.getElementById('sub-text');
+    
+    let isActive = false;
+    let isAuthenticated = false;
+
+    // Voice Recognition Setup
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.continuous = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+        const cmd = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        
+        // 1. Wake Up
+        if (cmd.includes("jarvis utho")) {
+            isActive = true;
+            ui.classList.add('active-mode');
+            statusText.innerText = "SECURITY CHECK";
+            speak("Ji Sir, main uth gaya hoon. Password?");
+        }
+
+        // 2. Password Verification
+        else if (isActive && !isAuthenticated) {
+            if (cmd.includes("alpha one")) {
+                isAuthenticated = true;
+                statusText.innerText = "ONLINE";
+                subText.innerText = "Listening for commands...";
+                speak("Access granted. Hukm kijiye Sir.");
+            } else {
+                speak("Password galat hai.");
+            }
+        }
+
+        // 3. Authorized Commands
+        else if (isAuthenticated) {
+            if (cmd.includes("so jao")) {
+                isActive = false;
+                isAuthenticated = false;
+                ui.classList.remove('active-mode');
+                statusText.innerText = "SLEEPING";
+                speak("Theek hai sir, shubh ratri.");
+            } else if (cmd.includes("hello")) {
+                speak("Hello Sir, main aapki kaise madad kar sakta hoon?");
+            }
+        }
+    };
+
+    function speak(text) {
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.rate = 1.1; // Speed
+        window.speechSynthesis.speak(speech);
+    }
+
+    // Initialize on first tap
+    window.onclick = () => {
+        recognition.start();
+        statusText.innerText = "WATING FOR WAKE WORD";
+        subText.innerText = "Say: 'Jarvis, utho'";
+    };
+</script>
+</body>
+</html>
