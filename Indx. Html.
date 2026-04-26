@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis Pro</title>
+    <style>
+        body { background-color: #050505; color: #00d4ff; text-align: center; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; }
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .jarvis-ui { position: relative; width: 220px; height: 220px; }
+        .outer-ring { position: absolute; width: 100%; height: 100%; border: 2px dashed #00d4ff; border-radius: 50%; animation: rotate 10s linear infinite; opacity: 0.3; }
+        .inner-core { position: absolute; top: 25%; left: 25%; width: 50%; height: 50%; background: radial-gradient(circle, #00d4ff 10%, #005f73 80%); border-radius: 50%; box-shadow: 0 0 40px #00d4ff; transition: 0.3s; }
+        .active-mode .inner-core { background: radial-gradient(circle, #ff00ea 10%, #7b00ff 80%); box-shadow: 0 0 60px #ff00ea; animation: pulse 0.8s infinite alternate; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse { from { transform: scale(0.9); } to { transform: scale(1.1); } }
+        #status { font-size: 1.2rem; letter-spacing: 2px; margin-top: 30px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-ui">
+    <div class="jarvis-ui">
+        <div class="outer-ring"></div>
+        <div class="inner-core"></div>
+    </div>
+    <h2 id="status">Tap to Initialize</h2>
+</div>
+
+<script>
+    const ui = document.getElementById('main-ui');
+    const statusText = document.getElementById('status');
+    let isActive = false;
+    let myWindow; // Window handle karne ke liye
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.continuous = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+        const cmd = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+        console.log("Command:", cmd);
+
+        // 1. WAKE UP
+        if (cmd.includes("jarvis utho") || cmd.includes("utho")) {
+            isActive = true;
+            ui.classList.add('active-mode');
+            statusText.innerText = "Jarvis Active";
+            speak("Ji Sir, main taiyar hoon.");
+        }
+
+        // 2. SEARCH & APPS (Only if Active)
+        else if (isActive) {
+            
+            // Search on Google
+            if (cmd.includes("search") || cmd.includes("dhundo")) {
+                let query = cmd.replace("search", "").replace("dhundo", "").trim();
+                speak("Searching for " + query);
+                myWindow = window.open("https://www.google.com/search?q=" + query, "_blank");
+            }
+
+            // Open Apps/Websites
+            else if (cmd.includes("open youtube")) {
+                speak("Opening YouTube Sir.");
+                myWindow = window.open("https://www.youtube.com", "_blank");
+            }
+            else if (cmd.includes("open facebook")) {
+                speak("Opening Facebook.");
+                myWindow = window.open("https://www.facebook.com", "_blank");
+            }
+            else if (cmd.includes("open instagram")) {
+                speak("Opening Instagram.");
+                myWindow = window.open("https://www.instagram.com", "_blank");
+            }
+            else if (cmd.includes("open whatsapp")) {
+                speak("Opening WhatsApp.");
+                myWindow = window.open("https://web.whatsapp.com", "_blank");
+            }
+
+            // Close App/Tab
+            else if (cmd.includes("close") || cmd.includes("band karo")) {
+                if (myWindow) {
+                    myWindow.close();
+                    speak("Sir, maine window band kar di hai.");
+                } else {
+                    speak("Sir, koi window open nahi hai.");
+                }
+            }
+
+            // Sleep
+            else if (cmd.includes("so jao")) {
+                isActive = false;
+                ui.classList.remove('active-mode');
+                statusText.innerText = "Sleeping";
+                speak("Theek hai Sir, shubh ratri.");
+            }
+        }
+    };
+
+    function speak(text) {
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.rate = 1.1;
+        window.speechSynthesis.speak(speech);
+    }
+
+    window.onclick = () => {
+        recognition.start();
+        statusText.innerText = "Jarvis is Listening...";
+    };
+
+    recognition.onend = () => { recognition.start(); };
+</script>
+</body>
+</html>
